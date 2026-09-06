@@ -1,5 +1,43 @@
 const sessionService = require("../services/session.service");
 
+const createSession = async (req, res) => {
+  try {
+    const {
+      studentId,
+      topic,
+      scheduledAt,
+    } = req.body;
+
+    if (!studentId || !topic || !scheduledAt) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Student, topic and scheduled time are required",
+      });
+    }
+
+    const session = await sessionService.createSession({
+      tutorId: req.user.id,
+      studentId,
+      topic,
+      scheduledAt,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Session scheduled successfully",
+      session,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -25,5 +63,6 @@ const updateStatus = async (req, res) => {
 };
 
 module.exports = {
+  createSession,
   updateStatus,
 };
