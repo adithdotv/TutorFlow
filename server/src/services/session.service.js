@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const aiService = require("./ai.service");
 
 const transitions = {
   SCHEDULED: "IN_PROGRESS",
@@ -150,8 +151,116 @@ const getSessionsByTutor = async (tutorId) => {
   return result.rows;
 };
 
+
+const getSessionWithStudentContext = async (sessionId, tutorId) => {
+  const sessionResult = await pool.query(
+    `
+      SELECT
+        s.id,
+        s.topic,
+        s.scheduled_at,
+        s.status,
+        s.ai_plan,
+
+        u.id AS student_id,
+        u.name AS student_name,
+
+        sp.subject,
+        sp.current_level,
+        sp.learning_goals,
+        sp.weak_areas
+
+      FROM sessions s
+
+      JOIN users u
+        ON u.id = s.student_id
+
+      JOIN student_profiles sp
+        ON sp.user_id = s.student_id
+
+      WHERE s.id = $1
+      AND s.tutor_id = $2
+    `,
+    [sessionId, tutorId]
+  );
+
+  if (sessionResult.rows.length === 0) {
+    throw new Error("Session not found");
+  }
+
+  const session = sessionResult.rows[0];
+
+  const pastSessionsResult = await pool.query(
+    `
+      SELECT
+        topic,
+        status,
+        ai_review,
+        scheduled_at
+      FROM sessions
+      WHERE student_id = $1
+      AND scheduled_at < $2
+      ORDER BY scheduled_at DESC
+    `,
+    [session.student_id, session.scheduled_at]
+  );
+
+  return {
+    session,
+    pastSessions: pastSessionsResult.rows,
+  };
+};
+
+
+const generatePlan = async (sessionId, tutorId) => {
+  const { session, pastSessions } =
+    await getSessionWithStudentContext(
+      sessionId,
+      tutorId
+    );
+
+  if (session.status !== "SCHEDULED") {
+    throw new Error(
+      "AI session plan can only be generated for scheduled sessions"
+    );
+  }
+
+  const student = {
+    name: session.student_name,
+    subject: session.subject,
+    current_level: session.current_level,
+    learning_goals: session.learning_goals,
+    weak_areas: session.weak_areas,
+  };
+
+  const plan = await aiService.generateSessionPlan({
+    student,
+    session,
+    pastSessions,
+  });
+
+  const result = await pool.query(
+    `
+      UPDATE sessions
+      SET ai_plan = $1
+      WHERE id = $2
+      AND tutor_id = $3
+      RETURNING *
+    `,
+    [
+      JSON.stringify(plan),
+      sessionId,
+      tutorId,
+    ]
+  );
+
+  return result.rows[0];
+};
+
 module.exports = {
   createSession,
   updateSessionStatus,
   getSessionsByTutor,
+  getSessionWithStudentContext,
+  generatePlan,
 };

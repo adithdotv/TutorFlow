@@ -27,4 +27,11 @@ router.get(
   sessionController.getSessions
 );
 
+router.post(
+  "/:id/ai-plan",
+  authenticate,
+  authorize("tutor"),
+  sessionController.generatePlan
+);
+
 module.exports = router;
