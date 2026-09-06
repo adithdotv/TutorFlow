@@ -1,5 +1,7 @@
 const sessionRoutes = require("./routes/session.routes");
 const authRoutes = require("./routes/auth.routes");
+const studentRoutes = require("./routes/student.routes");
+
 
 require("dotenv").config();
 
@@ -15,6 +17,8 @@ app.use(express.json());
 
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/students", studentRoutes);
+
 app.get("/api/health", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
