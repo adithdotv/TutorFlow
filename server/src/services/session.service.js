@@ -117,7 +117,41 @@ const updateSessionStatus = async (sessionId, newStatus) => {
   return updatedSession.rows[0];
 };
 
+
+const getSessionsByTutor = async (tutorId) => {
+  const result = await pool.query(
+    `
+      SELECT
+        s.id,
+        s.topic,
+        s.scheduled_at,
+        s.status,
+        s.notes,
+        s.ai_plan,
+        s.ai_review,
+        s.created_at,
+
+        u.id AS student_id,
+        u.name AS student_name,
+        u.email AS student_email
+
+      FROM sessions s
+
+      JOIN users u
+        ON u.id = s.student_id
+
+      WHERE s.tutor_id = $1
+
+      ORDER BY s.scheduled_at ASC
+    `,
+    [tutorId]
+  );
+
+  return result.rows;
+};
+
 module.exports = {
   createSession,
   updateSessionStatus,
+  getSessionsByTutor,
 };

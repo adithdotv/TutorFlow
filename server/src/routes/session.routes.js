@@ -20,4 +20,11 @@ router.patch(
   sessionController.updateStatus
 );
 
+router.get(
+  "/",
+  authenticate,
+  authorize("tutor"),
+  sessionController.getSessions
+);
+
 module.exports = router;

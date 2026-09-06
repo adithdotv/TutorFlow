@@ -62,7 +62,28 @@ const updateStatus = async (req, res) => {
   }
 };
 
+const getSessions = async (req, res) => {
+  try {
+    const sessions =
+      await sessionService.getSessionsByTutor(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      sessions,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch sessions",
+    });
+  }
+};
+  
+
 module.exports = {
   createSession,
   updateStatus,
+  getSessions,
 };

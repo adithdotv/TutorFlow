@@ -12,15 +12,16 @@ const createStudent = async (req, res) => {
       weakAreas,
     } = req.body;
 
-    // Basic validation
     if (!name || !email || !password || !subject) {
       return res.status(400).json({
         success: false,
-        message: "Name, email, password and subject are required",
+        message:
+          "Name, email, password and subject are required",
       });
     }
 
     const result = await studentService.createStudent({
+      tutorId: req.user.id,
       name,
       email,
       password,
@@ -45,6 +46,26 @@ const createStudent = async (req, res) => {
   }
 };
 
+const getStudents = async (req, res) => {
+  try {
+    const students =
+      await studentService.getStudentsByTutor(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      students,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch students",
+    });
+  }
+};
+
 module.exports = {
   createStudent,
+  getStudents,
 };

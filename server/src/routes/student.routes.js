@@ -13,4 +13,11 @@ router.post(
   studentController.createStudent
 );
 
+router.get(
+  "/",
+  authenticate,
+  authorize("tutor"),
+  studentController.getStudents
+);
+
 module.exports = router;

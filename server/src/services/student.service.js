@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const bcrypt = require("bcrypt");
 
 const createStudent = async ({
+  tutorId,
   name,
   email,
   password,
@@ -13,10 +14,8 @@ const createStudent = async ({
   const client = await pool.connect();
 
   try {
-    // Start transaction
     await client.query("BEGIN");
 
-    // 1. Check if email already exists
     const existingUser = await client.query(
       `
         SELECT id
@@ -30,10 +29,8 @@ const createStudent = async ({
       throw new Error("Email already registered");
     }
 
-    // 2. Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // 3. Create student user
     const userResult = await client.query(
       `
         INSERT INTO users (
@@ -42,7 +39,7 @@ const createStudent = async ({
           password_hash,
           role
         )
-        VALUES ($1, $2, $3, 'student')
+        VALUES ($1, $2, $3, 'STUDENT')
         RETURNING id, name, email, role
       `,
       [name, email, passwordHash]
@@ -50,21 +47,22 @@ const createStudent = async ({
 
     const user = userResult.rows[0];
 
-    // 4. Create student profile
     const profileResult = await client.query(
       `
         INSERT INTO student_profiles (
           user_id,
+          tutor_id,
           subject,
           current_level,
           learning_goals,
           weak_areas
         )
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
       `,
       [
         user.id,
+        tutorId,
         subject,
         currentLevel,
         learningGoals,
@@ -74,7 +72,6 @@ const createStudent = async ({
 
     const profile = profileResult.rows[0];
 
-    // 5. Everything succeeded
     await client.query("COMMIT");
 
     return {
@@ -82,16 +79,39 @@ const createStudent = async ({
       profile,
     };
   } catch (error) {
-    // Something failed → undo everything
     await client.query("ROLLBACK");
-
     throw error;
   } finally {
-    // Always return client to pool
     client.release();
   }
 };
 
+
+const getStudentsByTutor = async (tutorId) => {
+  const result = await pool.query(
+    `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        sp.subject,
+        sp.current_level,
+        sp.learning_goals,
+        sp.weak_areas,
+        sp.created_at
+      FROM users u
+      JOIN student_profiles sp
+        ON sp.user_id = u.id
+      WHERE sp.tutor_id = $1
+      ORDER BY u.name ASC
+    `,
+    [tutorId]
+  );
+
+  return result.rows;
+};
+
 module.exports = {
   createStudent,
+  getStudentsByTutor,
 };
