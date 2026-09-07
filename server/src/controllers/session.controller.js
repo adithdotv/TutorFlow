@@ -1,5 +1,19 @@
 const sessionService = require("../services/session.service");
 
+const ISO_INSTANT =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+
+const parseScheduledAt = (value) => {
+  if (typeof value !== "string") return null;
+  if (!ISO_INSTANT.test(value)) return null;
+
+  const scheduledAt = new Date(value);
+
+  if (Number.isNaN(scheduledAt.getTime())) return null;
+
+  return scheduledAt;
+};
+
 const createSession = async (req, res) => {
   try {
     const {
@@ -16,11 +30,21 @@ const createSession = async (req, res) => {
       });
     }
 
+    const scheduledInstant = parseScheduledAt(scheduledAt);
+
+    if (!scheduledInstant) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Scheduled time must be an ISO-8601 timestamp with a UTC offset",
+      });
+    }
+
     const session = await sessionService.createSession({
       tutorId: req.user.id,
       studentId,
       topic,
-      scheduledAt,
+      scheduledAt: scheduledInstant,
     });
 
     res.status(201).json({

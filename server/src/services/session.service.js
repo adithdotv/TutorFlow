@@ -45,7 +45,7 @@ const createSession = async ({
         SELECT id
         FROM sessions
         WHERE tutor_id = $1
-        AND scheduled_at = $2
+        AND scheduled_at = $2::timestamptz
       `,
       [tutorId, scheduledAt]
     );
@@ -67,7 +67,7 @@ const createSession = async ({
           topic,
           scheduled_at
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4::timestamptz)
         RETURNING *
       `,
       [
