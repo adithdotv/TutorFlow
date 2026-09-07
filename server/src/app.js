@@ -15,7 +15,9 @@ const pool = require("./config/db");
 
 const app = express();
 
-app.use(cors());
+const corsOrigin = process.env.CLIENT_URL || "*";
+
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 app.use("/api/sessions", sessionRoutes);

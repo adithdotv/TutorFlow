@@ -4,7 +4,6 @@ const aiService = require("./ai.service");
 const transitions = {
   SCHEDULED: "IN_PROGRESS",
   IN_PROGRESS: "COMPLETED",
-  COMPLETED: "AI_REVIEWED",
 };
 
 const createSession = async ({
