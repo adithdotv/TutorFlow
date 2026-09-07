@@ -7,14 +7,8 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 import Login from "../pages/Login";
+import TutorDashboard from "../pages/tutor/TutorDashboard";
 
-const TutorHome = () => (
-  <div className="p-8">
-    <h1 className="text-3xl font-bold">
-      Tutor Dashboard
-    </h1>
-  </div>
-);
 
 const StudentHome = () => (
   <div className="p-8">
@@ -93,7 +87,7 @@ const AppRoutes = () => {
         path="/tutor"
         element={
           <ProtectedRoute role="tutor">
-            <TutorHome />
+            <TutorDashboard />
           </ProtectedRoute>
         }
       />
