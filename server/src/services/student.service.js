@@ -39,7 +39,7 @@ const createStudent = async ({
           password_hash,
           role
         )
-        VALUES ($1, $2, $3, 'STUDENT')
+        VALUES ($1, $2, $3, 'student')
         RETURNING id, name, email, role
       `,
       [name, email, passwordHash]

@@ -20,7 +20,7 @@ const getProfile = async (studentId) => {
         ON sp.user_id = u.id
 
       WHERE u.id = $1
-      AND u.role = 'STUDENT'
+      AND u.role = 'student'
     `,
     [studentId]
   );

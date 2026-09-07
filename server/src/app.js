@@ -4,6 +4,7 @@ const studentRoutes = require("./routes/student.routes");
 const studentDashboardRoutes = require(
   "./routes/student-dashboard.routes"
 );
+const progressRoutes = require("./routes/progress.routes");
 
 require("dotenv").config();
 
@@ -21,6 +22,7 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/student", studentDashboardRoutes);
+app.use("/api/progress", progressRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {

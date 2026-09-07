@@ -29,7 +29,7 @@ const createSession = async ({
         JOIN student_profiles sp
           ON sp.user_id = u.id
         WHERE u.id = $1
-          AND u.role = 'STUDENT'
+          AND u.role = 'student'
           AND sp.tutor_id = $2
       `,
       [studentId, tutorId]

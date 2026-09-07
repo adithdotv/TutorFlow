@@ -10,51 +10,51 @@ const generateSessionPlan = async ({
   pastSessions,
 }) => {
   const prompt = `
-You are an expert one-to-one tutoring assistant.
+  You are an expert one-to-one tutoring assistant.
 
-Create a personalized lesson plan for the upcoming tutoring session.
+  Create a personalized lesson plan for the upcoming tutoring session.
 
-STUDENT PROFILE:
-Name: ${student.name}
-Subject: ${student.subject}
-Current Level: ${student.current_level || "Not specified"}
-Learning Goals: ${student.learning_goals || "Not specified"}
-Weak Areas: ${student.weak_areas || "Not specified"}
+  STUDENT PROFILE:
+  Name: ${student.name}
+  Subject: ${student.subject}
+  Current Level: ${student.current_level || "Not specified"}
+  Learning Goals: ${student.learning_goals || "Not specified"}
+  Weak Areas: ${student.weak_areas || "Not specified"}
 
-UPCOMING SESSION:
-Topic: ${session.topic}
-Scheduled At: ${session.scheduled_at}
+  UPCOMING SESSION:
+  Topic: ${session.topic}
+  Scheduled At: ${session.scheduled_at}
 
-PAST SESSION HISTORY:
-${
-  pastSessions.length > 0
-    ? pastSessions
-        .map(
-          (past, index) => `
-Session ${index + 1}:
-Topic: ${past.topic}
-Status: ${past.status}
-AI Review: ${
-            past.ai_review
-              ? JSON.stringify(past.ai_review)
-              : "No AI review available"
-          }
-`
-        )
-        .join("\n")
-    : "No previous sessions."
-}
+  PAST SESSION HISTORY:
+  ${
+    pastSessions.length > 0
+      ? pastSessions
+          .map(
+            (past, index) => `
+  Session ${index + 1}:
+  Topic: ${past.topic}
+  Status: ${past.status}
+  AI Review: ${
+              past.ai_review
+                ? JSON.stringify(past.ai_review)
+                : "No AI review available"
+            }
+  `
+          )
+          .join("\n")
+      : "No previous sessions."
+  }
 
-Create a practical lesson plan specifically for this student.
+  Create a practical lesson plan specifically for this student.
 
-Requirements:
-- Learning objectives must match the student's current level.
-- Address the student's weak areas.
-- Use previous session reviews when useful.
-- Keep the plan suitable for a one-to-one tutoring session.
-- Provide exactly 4 outline points.
-- Provide exactly 3 practice questions.
-`;
+  Requirements:
+  - Learning objectives must match the student's current level.
+  - Address the student's weak areas.
+  - Use previous session reviews when useful.
+  - Keep the plan suitable for a one-to-one tutoring session.
+  - Provide exactly 4 outline points.
+  - Provide exactly 3 practice questions.
+  `;
 
   try {
     const response = await ai.models.generateContent({
@@ -249,7 +249,119 @@ Requirements:
   }
 };
 
+
+const generateProgressInsights = async ({
+  student,
+  reviews,
+}) => {
+  const prompt = `
+You are an expert tutoring progress analyst.
+
+Analyze the student's tutoring history and identify
+their learning progress and recurring struggles.
+
+STUDENT PROFILE:
+Name: ${student.name}
+Subject: ${student.subject}
+Current Level: ${student.current_level || "Not specified"}
+Learning Goals: ${student.learning_goals || "Not specified"}
+Weak Areas: ${student.weak_areas || "Not specified"}
+
+PAST AI SESSION REVIEWS:
+
+${reviews
+  .map(
+    (item) => `
+Session ${item.sessionNumber}
+Topic: ${item.topic}
+Date: ${item.scheduledAt}
+
+AI Review:
+${JSON.stringify(item.review)}
+`
+  )
+  .join("\n")}
+
+Based on ALL available session reviews:
+
+1. Summarize how the student is improving.
+2. Identify recurring struggles.
+3. Do not invent information that is not present in the reviews.
+4. Keep the response concise and useful for the tutor.
+`;
+
+  try {
+    const response =
+      await ai.models.generateContent({
+        model: "gemini-3.5-flash-lite",
+
+        contents: prompt,
+
+        config: {
+          responseMimeType: "application/json",
+
+          responseSchema: {
+            type: "object",
+
+            properties: {
+              improvementSummary: {
+                type: "string",
+              },
+
+              recurringStruggles: {
+                type: "array",
+
+                items: {
+                  type: "string",
+                },
+              },
+            },
+
+            required: [
+              "improvementSummary",
+              "recurringStruggles",
+            ],
+          },
+        },
+      });
+
+    const text = response.text;
+
+    if (!text) {
+      throw new Error(
+        "Gemini returned an empty response"
+      );
+    }
+
+    const insights = JSON.parse(text);
+
+    if (
+      typeof insights.improvementSummary !==
+        "string" ||
+      !Array.isArray(
+        insights.recurringStruggles
+      )
+    ) {
+      throw new Error(
+        "Gemini returned an invalid progress insight structure"
+      );
+    }
+
+    return insights;
+  } catch (error) {
+    console.error(
+      "Gemini progress analysis error:",
+      error
+    );
+
+    throw new Error(
+      `Failed to generate progress insights: ${error.message}`
+    );
+  }
+};
+
 module.exports = {
   generateSessionPlan,
   generateSessionReview,
+  generateProgressInsights,
 };
