@@ -150,6 +150,33 @@ const updateNotes = async (req, res) => {
     });
   }
 };
+
+
+
+const generateReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const session =
+      await sessionService.generateReview(
+        id,
+        req.user.id
+      );
+
+    res.status(200).json({
+      success: true,
+      message: "AI session review generated successfully",
+      session,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
   
 
 module.exports = {
@@ -158,4 +185,5 @@ module.exports = {
   getSessions,
   generatePlan,
   updateNotes,
+  generateReview,
 };

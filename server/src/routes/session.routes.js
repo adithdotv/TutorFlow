@@ -41,4 +41,11 @@ router.patch(
   sessionController.updateNotes
 );
 
+router.post(
+  "/:id/ai-review",
+  authenticate,
+  authorize("tutor"),
+  sessionController.generateReview
+);
+
 module.exports = router;

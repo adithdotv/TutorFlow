@@ -140,6 +140,116 @@ Requirements:
   }
 };
 
+
+
+const generateSessionReview = async ({
+  student,
+  session,
+}) => {
+  const prompt = `
+You are an expert one-to-one tutoring assistant.
+
+Review the completed tutoring session and create a concise
+post-session review.
+
+STUDENT PROFILE:
+Name: ${student.name}
+Subject: ${student.subject}
+Current Level: ${student.current_level || "Not specified"}
+Learning Goals: ${student.learning_goals || "Not specified"}
+Weak Areas: ${student.weak_areas || "Not specified"}
+
+COMPLETED SESSION:
+Topic: ${session.topic}
+
+SESSION NOTES:
+${session.notes || "No notes were provided."}
+
+Create a useful review based only on the information above.
+
+Requirements:
+- Provide a concise summary of what was covered and how the student performed.
+- Provide exactly 2 or 3 practical homework tasks.
+- Provide exactly one suggestion for the next tutoring session.
+- Homework should relate to the student's weak areas and session topic.
+- The next-session suggestion should be actionable.
+`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash-lite",
+      contents: prompt,
+
+      config: {
+        responseMimeType: "application/json",
+
+        responseSchema: {
+          type: "object",
+
+          properties: {
+            summary: {
+              type: "string",
+            },
+
+            homework: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+
+            nextSessionSuggestion: {
+              type: "string",
+            },
+          },
+
+          required: [
+            "summary",
+            "homework",
+            "nextSessionSuggestion",
+          ],
+        },
+      },
+    });
+
+    const text = response.text;
+
+    if (!text) {
+      throw new Error("Gemini returned an empty response");
+    }
+
+    const review = JSON.parse(text);
+
+    if (
+      typeof review.summary !== "string" ||
+      !Array.isArray(review.homework) ||
+      typeof review.nextSessionSuggestion !== "string"
+    ) {
+      throw new Error(
+        "Gemini returned an invalid session review structure"
+      );
+    }
+
+    if (
+      review.homework.length < 2 ||
+      review.homework.length > 3
+    ) {
+      throw new Error(
+        "Gemini must return 2 or 3 homework tasks"
+      );
+    }
+
+    return review;
+  } catch (error) {
+    console.error("Gemini AI review error:", error);
+
+    throw new Error(
+      `Failed to generate AI session review: ${error.message}`
+    );
+  }
+};
+
 module.exports = {
   generateSessionPlan,
+  generateSessionReview,
 };

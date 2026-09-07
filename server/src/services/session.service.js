@@ -320,6 +320,96 @@ const updateSessionNotes = async (
   return updatedSession.rows[0];
 };
 
+
+const generateReview = async (
+  sessionId,
+  tutorId
+) => {
+  const result = await pool.query(
+    `
+      SELECT
+        s.id,
+        s.topic,
+        s.status,
+        s.notes,
+
+        u.id AS student_id,
+        u.name AS student_name,
+
+        sp.subject,
+        sp.current_level,
+        sp.learning_goals,
+        sp.weak_areas
+
+      FROM sessions s
+
+      JOIN users u
+        ON u.id = s.student_id
+
+      JOIN student_profiles sp
+        ON sp.user_id = s.student_id
+
+      WHERE s.id = $1
+      AND s.tutor_id = $2
+    `,
+    [sessionId, tutorId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error(
+      "Session not found or does not belong to this tutor"
+    );
+  }
+
+  const session = result.rows[0];
+
+  if (session.status !== "COMPLETED") {
+    throw new Error(
+      "AI review can only be generated for completed sessions"
+    );
+  }
+
+  const student = {
+    name: session.student_name,
+    subject: session.subject,
+    current_level: session.current_level,
+    learning_goals: session.learning_goals,
+    weak_areas: session.weak_areas,
+  };
+
+  const review =
+    await aiService.generateSessionReview({
+      student,
+      session,
+    });
+
+  const updatedSession = await pool.query(
+    `
+      UPDATE sessions
+      SET
+        ai_review = $1,
+        status = 'AI_REVIEWED'
+      WHERE id = $2
+      AND tutor_id = $3
+      AND status = 'COMPLETED'
+      RETURNING *
+    `,
+    [
+      JSON.stringify(review),
+      sessionId,
+      tutorId,
+    ]
+  );
+
+  if (updatedSession.rows.length === 0) {
+    throw new Error(
+      "Session could not be reviewed"
+    );
+  }
+
+  return updatedSession.rows[0];
+};
+
 module.exports = {
   createSession,
   updateSessionStatus,
@@ -327,4 +417,5 @@ module.exports = {
   getSessionWithStudentContext,
   generatePlan,
   updateSessionNotes,
+  generateReview,
 };
