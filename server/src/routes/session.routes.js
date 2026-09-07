@@ -34,4 +34,11 @@ router.post(
   sessionController.generatePlan
 );
 
+router.patch(
+  "/:id/notes",
+  authenticate,
+  authorize("tutor"),
+  sessionController.updateNotes
+);
+
 module.exports = router;

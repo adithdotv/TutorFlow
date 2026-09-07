@@ -115,6 +115,41 @@ const generatePlan = async (req, res) => {
     });
   }
 };
+
+
+const updateNotes = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    if (typeof notes !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Notes must be a string",
+      });
+    }
+
+    const session =
+      await sessionService.updateSessionNotes(
+        id,
+        req.user.id,
+        notes
+      );
+
+    res.status(200).json({
+      success: true,
+      message: "Notes saved successfully",
+      session,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
   
 
 module.exports = {
@@ -122,4 +157,5 @@ module.exports = {
   updateStatus,
   getSessions,
   generatePlan,
+  updateNotes,
 };

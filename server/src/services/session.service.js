@@ -276,10 +276,55 @@ const generatePlan = async (sessionId, tutorId) => {
   return result.rows[0];
 };
 
+
+const updateSessionNotes = async (
+  sessionId,
+  tutorId,
+  notes
+) => {
+  const result = await pool.query(
+    `
+      SELECT id, status
+      FROM sessions
+      WHERE id = $1
+      AND tutor_id = $2
+    `,
+    [sessionId, tutorId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error(
+      "Session not found or does not belong to this tutor"
+    );
+  }
+
+  const session = result.rows[0];
+
+  if (session.status !== "IN_PROGRESS") {
+    throw new Error(
+      "Notes can only be edited while the session is in progress"
+    );
+  }
+
+  const updatedSession = await pool.query(
+    `
+      UPDATE sessions
+      SET notes = $1
+      WHERE id = $2
+      AND tutor_id = $3
+      RETURNING id, notes, status
+    `,
+    [notes, sessionId, tutorId]
+  );
+
+  return updatedSession.rows[0];
+};
+
 module.exports = {
   createSession,
   updateSessionStatus,
   getSessionsByTutor,
   getSessionWithStudentContext,
   generatePlan,
+  updateSessionNotes,
 };
