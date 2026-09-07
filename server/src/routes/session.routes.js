@@ -27,6 +27,13 @@ router.get(
   sessionController.getSessions
 );
 
+router.get(
+  "/:id",
+  authenticate,
+  authorize("tutor"),
+  sessionController.getSessionById
+);
+
 router.post(
   "/:id/ai-plan",
   authenticate,

@@ -241,7 +241,8 @@ const TutorDashboard = () => {
                 {upcomingSessions.slice(0, 5).map((session) => (
                   <div
                     key={session.id}
-                    className="px-6 py-4"
+                    onClick={() => navigate(`/tutor/sessions/${session.id}`)}
+                    className="px-6 py-4 cursor-pointer transition hover:bg-slate-50"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>

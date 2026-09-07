@@ -245,6 +245,36 @@ const getSessionWithStudentContext = async (sessionId, tutorId) => {
   };
 };
 
+const getSessionById = async (sessionId, tutorId) => {
+  const result = await pool.query(
+    `
+      SELECT
+        s.id,
+        s.topic,
+        s.scheduled_at,
+        s.status,
+        s.notes,
+        s.ai_plan,
+        s.ai_review,
+        s.tutor_id,
+        s.student_id,
+        u.name AS student_name,
+        u.email AS student_email
+      FROM sessions s
+      JOIN users u ON u.id = s.student_id
+      WHERE s.id = $1
+        AND s.tutor_id = $2
+    `,
+    [sessionId, tutorId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("Session not found");
+  }
+
+  return result.rows[0];
+};
+
 
 const generatePlan = async (sessionId, tutorId) => {
   const { session, pastSessions } =
@@ -429,6 +459,7 @@ module.exports = {
   createSession,
   updateSessionStatus,
   getSessionsByTutor,
+  getSessionById,
   getSessionWithStudentContext,
   generatePlan,
   updateSessionNotes,

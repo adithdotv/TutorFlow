@@ -10,6 +10,7 @@ import Login from "../pages/Login";
 import TutorDashboard from "../pages/tutor/TutorDashboard";
 import AddStudent from "../pages/tutor/AddStudent";
 import ScheduleSession from "../pages/tutor/ScheduleSession";
+import SessionDetails from "../pages/tutor/SessionDetails";
 
 const StudentHome = () => (
   <div className="p-8">
@@ -107,6 +108,15 @@ const AppRoutes = () => {
         element={
             <ProtectedRoute role="tutor">
             <ScheduleSession />
+            </ProtectedRoute>
+        }
+    />
+
+    <Route
+        path="/tutor/sessions/:id"
+        element={
+            <ProtectedRoute role="tutor">
+            <SessionDetails />
             </ProtectedRoute>
         }
     />
