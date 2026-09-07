@@ -12,14 +12,8 @@ import AddStudent from "../pages/tutor/AddStudent";
 import ScheduleSession from "../pages/tutor/ScheduleSession";
 import SessionDetails from "../pages/tutor/SessionDetails";
 import StudentProgress from "../pages/tutor/StudentProgress";
+import StudentDashboard from "../pages/student/StudentDashboard";
 
-const StudentHome = () => (
-  <div className="p-8">
-    <h1 className="text-3xl font-bold">
-      Student Dashboard
-    </h1>
-  </div>
-);
 
 const ProtectedRoute = ({
   children,
@@ -135,7 +129,7 @@ const AppRoutes = () => {
         path="/student"
         element={
           <ProtectedRoute role="student">
-            <StudentHome />
+            <StudentDashboard />
           </ProtectedRoute>
         }
       />
