@@ -315,6 +315,15 @@ const TutorDashboard = () => {
                           {student.current_level}
                         </p>
                       )}
+
+                      <button
+                        onClick={() =>
+                          navigate(`/tutor/students/${student.id}/progress`)
+                        }
+                        className="text-sm font-medium text-slate-700 hover:text-slate-900"
+                      >
+                        View Progress →
+                      </button>
                     </div>
                   </div>
                 ))}

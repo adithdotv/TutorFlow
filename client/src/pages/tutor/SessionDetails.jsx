@@ -37,6 +37,7 @@ const SessionDetails = () => {
   const saveTimeoutRef = useRef(null);
 
   const [generatingPlan, setGeneratingPlan] = useState(false);
+  const [generatingReview, setGeneratingReview] = useState(false);
 
   const fetchSession = async () => {
     try {
@@ -136,6 +137,29 @@ const SessionDetails = () => {
       );
     } finally {
       setGeneratingPlan(false);
+    }
+  };
+
+
+  const generateAIReview = async () => {
+    try {
+      setGeneratingReview(true);
+      setError("");
+
+      const response = await api.post(
+        `/sessions/${id}/ai-review`
+      );
+
+      setSession(response.data.session || response.data);
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        error.response?.data?.message ||
+          "Failed to generate AI review"
+      );
+    } finally {
+      setGeneratingReview(false);
     }
   };
 
@@ -492,6 +516,7 @@ const SessionDetails = () => {
           )}
         </div>
 
+
         {/* Session Notes */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
@@ -558,6 +583,98 @@ const SessionDetails = () => {
             </p>
           )}
         </div>
+
+
+        {/* AI SESSION REVIEW */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                AI Session Review
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Gemini reviews the completed session notes and
+                suggests homework and the next learning step.
+              </p>
+            </div>
+
+            {session.status === "COMPLETED" && (
+              <button
+                onClick={generateAIReview}
+                disabled={generatingReview}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {generatingReview
+                  ? "Generating..."
+                  : "Generate AI Review"}
+              </button>
+            )}
+          </div>
+
+          {session.ai_review ? (
+            <div className="mt-6 space-y-6">
+
+              {/* Summary */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Session Summary
+                </h3>
+
+                <div className="mt-3 rounded-xl bg-slate-50 p-4">
+                  <p className="text-sm leading-6 text-slate-700">
+                    {session.ai_review.summary}
+                  </p>
+                </div>
+              </div>
+
+              {/* Homework */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Homework
+                </h3>
+
+                <div className="mt-3 space-y-3">
+                  {session.ai_review.homework?.map(
+                    (task, index) => (
+                      <div
+                        key={index}
+                        className="flex gap-3 rounded-xl border border-slate-200 p-4"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                          {index + 1}
+                        </div>
+
+                        <p className="text-sm text-slate-700">
+                          {task}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Next Session */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Next Session Suggestion
+                </h3>
+
+                <div className="mt-3 rounded-xl border border-slate-200 p-4">
+                  <p className="text-sm leading-6 text-slate-700">
+                    {session.ai_review.nextSessionSuggestion}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-500">
+              No AI review has been generated yet.
+            </div>
+          )}
+        </div>
+
       </main>
     </div>
   );

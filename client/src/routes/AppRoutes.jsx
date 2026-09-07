@@ -11,6 +11,7 @@ import TutorDashboard from "../pages/tutor/TutorDashboard";
 import AddStudent from "../pages/tutor/AddStudent";
 import ScheduleSession from "../pages/tutor/ScheduleSession";
 import SessionDetails from "../pages/tutor/SessionDetails";
+import StudentProgress from "../pages/tutor/StudentProgress";
 
 const StudentHome = () => (
   <div className="p-8">
@@ -121,6 +122,15 @@ const AppRoutes = () => {
         }
     />
 
+    <Route
+      path="/tutor/students/:studentId/progress"
+      element={
+        <ProtectedRoute role="tutor">
+          <StudentProgress />
+        </ProtectedRoute>
+      }
+    />
+
       <Route
         path="/student"
         element={
@@ -129,6 +139,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      
 
       <Route
         path="/"
