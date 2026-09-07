@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
 
@@ -32,6 +32,11 @@ const SessionDetails = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [savingNotes, setSavingNotes] = useState(false);
+  const saveTimeoutRef = useRef(null);
+
+  const [generatingPlan, setGeneratingPlan] = useState(false);
 
   const fetchSession = async () => {
     try {
@@ -90,6 +95,58 @@ const SessionDetails = () => {
     handleStatusChange("COMPLETED");
   };
 
+
+  
+  const saveNotes = async (notes) => {
+    try {
+      setSavingNotes(true);
+
+      await api.patch(`/sessions/${id}/notes`, {
+        notes,
+      });
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        error.response?.data?.message ||
+          "Failed to save notes"
+      );
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+
+  const generateAIPlan = async () => {
+    try {
+      setGeneratingPlan(true);
+      setError("");
+
+      const response = await api.post(
+        `/sessions/${id}/ai-plan`
+      );
+
+      setSession(response.data.session || response.data);
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        error.response?.data?.message ||
+        "Failed to generate AI session plan"
+      );
+    } finally {
+      setGeneratingPlan(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -99,6 +156,8 @@ const SessionDetails = () => {
       </div>
     );
   }
+
+
 
   if (error && !session) {
     return (
@@ -320,6 +379,119 @@ const SessionDetails = () => {
           </div>
         </div>
 
+
+        {/* AI SESSION PLAN */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                AI Session Plan
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Gemini generates a personalized plan using the student's
+                profile and previous session reviews.
+              </p>
+            </div>
+
+            {session.status === "SCHEDULED" && (
+              <button
+                onClick={generateAIPlan}
+                disabled={generatingPlan}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {generatingPlan
+                  ? "Generating..."
+                  : session.ai_plan
+                  ? "Regenerate Plan"
+                  : "Generate AI Plan"}
+              </button>
+            )}
+          </div>
+
+          {session.ai_plan ? (
+            <div className="mt-6 space-y-6">
+
+              {/* Learning Objectives */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Learning Objectives
+                </h3>
+
+                <ul className="mt-3 space-y-2">
+                  {session.ai_plan.learningObjectives?.map(
+                    (objective, index) => (
+                      <li
+                        key={index}
+                        className="flex gap-3 text-sm text-slate-700"
+                      >
+                        <span className="font-semibold text-slate-400">
+                          {index + 1}.
+                        </span>
+
+                        <span>{objective}</span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+
+              {/* Outline */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Session Outline
+                </h3>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {session.ai_plan.outline?.map(
+                    (item, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl bg-slate-50 p-4"
+                      >
+                        <p className="text-xs font-semibold text-slate-400">
+                          STEP {index + 1}
+                        </p>
+
+                        <p className="mt-1 text-sm text-slate-700">
+                          {item}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Practice Questions */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Practice Questions
+                </h3>
+
+                <div className="mt-3 space-y-3">
+                  {session.ai_plan.practiceQuestions?.map(
+                    (question, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-slate-200 p-4"
+                      >
+                        <p className="text-sm font-medium text-slate-800">
+                          {index + 1}. {question}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-500">
+              No AI plan has been generated yet.
+            </div>
+          )}
+        </div>
+
         {/* Session Notes */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
@@ -342,12 +514,22 @@ const SessionDetails = () => {
 
           <textarea
             value={session.notes || ""}
-            onChange={(event) =>
+            onChange={(event) => {
+              const notes = event.target.value;
+
               setSession((current) => ({
                 ...current,
-                notes: event.target.value,
-              }))
-            }
+                notes,
+              }));
+
+              if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+              }
+
+              saveTimeoutRef.current = setTimeout(() => {
+                saveNotes(notes);
+              }, 800);
+            }}
             disabled={session.status !== "IN_PROGRESS"}
             placeholder={
               session.status === "IN_PROGRESS"
@@ -358,9 +540,15 @@ const SessionDetails = () => {
           />
 
           {session.status === "IN_PROGRESS" && (
-            <p className="text-xs text-slate-400 mt-2">
-              Autosave will be added next.
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-slate-400">
+                Notes are automatically saved.
+              </p>
+
+              <p className="text-xs text-slate-500">
+                {savingNotes ? "Saving..." : "Saved"}
+              </p>
+            </div>
           )}
 
           {session.status !== "IN_PROGRESS" && (
