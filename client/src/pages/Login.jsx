@@ -37,7 +37,7 @@ const Login = () => {
           password
         );
 
-      if (user.role === "TUTOR") {
+      if (user.role === "tutor") {
         navigate("/tutor");
       } else {
         navigate("/student");

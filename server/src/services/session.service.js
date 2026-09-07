@@ -51,9 +51,11 @@ const createSession = async ({
     );
 
     if (existingSession.rows.length > 0) {
-      throw new Error(
-        "Tutor already has a session at this time"
+      const conflictError = new Error(
+        "You already has a session at this time"
       );
+      conflictError.statusCode = 409;
+      throw conflictError;
     }
 
     // 3. Create session
@@ -81,6 +83,19 @@ const createSession = async ({
     return sessionResult.rows[0];
   } catch (error) {
     await client.query("ROLLBACK");
+
+    if (
+      error.code === "23505" &&
+      error.constraint ===
+        "sessions_tutor_scheduled_at_unique"
+    ) {
+      const conflictError = new Error(
+        "Tutor already has a session at this time"
+      );
+      conflictError.statusCode = 409;
+      throw conflictError;
+    }
+
     throw error;
   } finally {
     client.release();

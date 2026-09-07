@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import Login from "../pages/Login";
 import TutorDashboard from "../pages/tutor/TutorDashboard";
 import AddStudent from "../pages/tutor/AddStudent";
-
+import ScheduleSession from "../pages/tutor/ScheduleSession";
 
 const StudentHome = () => (
   <div className="p-8">
@@ -101,6 +101,15 @@ const AppRoutes = () => {
             </ProtectedRoute>
         }
         />
+
+    <Route
+        path="/tutor/sessions/new"
+        element={
+            <ProtectedRoute role="tutor">
+            <ScheduleSession />
+            </ProtectedRoute>
+        }
+    />
 
       <Route
         path="/student"

@@ -31,7 +31,7 @@ const createSession = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    res.status(400).json({
+    res.status(error.statusCode || 400).json({
       success: false,
       message: error.message,
     });
