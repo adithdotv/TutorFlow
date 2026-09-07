@@ -43,10 +43,19 @@ const updateStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const session = await sessionService.updateSessionStatus(
-      id,
-      status
-    );
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
+
+    const session =
+      await sessionService.updateSessionStatus(
+        id,
+        status,
+        req.user.id
+      );
 
     res.status(200).json({
       success: true,

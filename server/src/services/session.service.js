@@ -21,12 +21,18 @@ const createSession = async ({
     // 1. Verify student exists and has STUDENT role
     const studentResult = await client.query(
       `
-        SELECT id, name, email
-        FROM users
-        WHERE id = $1
-        AND role = 'student'
+        SELECT
+          u.id,
+          u.name,
+          u.email
+        FROM users u
+        JOIN student_profiles sp
+          ON sp.user_id = u.id
+        WHERE u.id = $1
+          AND u.role = 'STUDENT'
+          AND sp.tutor_id = $2
       `,
-      [studentId]
+      [studentId, tutorId]
     );
 
     if (studentResult.rows.length === 0) {
@@ -81,23 +87,31 @@ const createSession = async ({
   }
 };
 
-const updateSessionStatus = async (sessionId, newStatus) => {
+const updateSessionStatus = async (
+  sessionId,
+  newStatus,
+  tutorId
+) => {
   const result = await pool.query(
     `
       SELECT id, status
       FROM sessions
       WHERE id = $1
+        AND tutor_id = $2
     `,
-    [sessionId]
+    [sessionId, tutorId]
   );
 
   if (result.rows.length === 0) {
-    throw new Error("Session not found");
+    throw new Error(
+      "Session not found or does not belong to this tutor"
+    );
   }
 
   const session = result.rows[0];
 
-  const expectedNextStatus = transitions[session.status];
+  const expectedNextStatus =
+    transitions[session.status];
 
   if (expectedNextStatus !== newStatus) {
     throw new Error(
@@ -110,9 +124,14 @@ const updateSessionStatus = async (sessionId, newStatus) => {
       UPDATE sessions
       SET status = $1
       WHERE id = $2
+        AND tutor_id = $3
       RETURNING *
     `,
-    [newStatus, sessionId]
+    [
+      newStatus,
+      sessionId,
+      tutorId,
+    ]
   );
 
   return updatedSession.rows[0];
