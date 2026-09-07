@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 
 import Login from "../pages/Login";
 import TutorDashboard from "../pages/tutor/TutorDashboard";
+import AddStudent from "../pages/tutor/AddStudent";
 
 
 const StudentHome = () => (
@@ -91,6 +92,15 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/tutor/students/new"
+        element={
+            <ProtectedRoute role="tutor">
+            <AddStudent />
+            </ProtectedRoute>
+        }
+        />
 
       <Route
         path="/student"
