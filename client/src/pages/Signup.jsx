@@ -3,49 +3,58 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
-const Login = () => {
+const MIN_PASSWORD_LENGTH = 8;
+
+const Signup = () => {
   const navigate = useNavigate();
 
-  const {
-    login,
-  } = useAuth();
+  const { signup } = useAuth();
 
-  const [email, setEmail] =
-    useState("");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
 
-  const [password, setPassword] =
-    useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-  const [loading, setLoading] =
-    useState(false);
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
+
+    if (form.password.length < MIN_PASSWORD_LENGTH) {
+      setError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
+      );
+
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const user =
-        await login(
-          email,
-          password
-        );
+      await signup(
+        form.name,
+        form.email,
+        form.password
+      );
 
-      if (user.role === "tutor") {
-        navigate("/tutor");
-      } else {
-        navigate("/student");
-      }
+      navigate("/tutor");
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Login failed"
+          "Could not create your account"
       );
     } finally {
       setLoading(false);
@@ -53,16 +62,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-10">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">
-            TutorFlow
+            Create a tutor account
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Sign in to continue
+            Sign up to start managing your students.
           </p>
         </div>
 
@@ -78,17 +87,30 @@ const Login = () => {
         >
           <div>
             <label className="mb-2 block text-sm font-medium">
+              Full name
+            </label>
+
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Jane Doe"
+              required
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">
               Email
             </label>
 
             <input
               type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(
-                  event.target.value
-                )
-              }
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               placeholder="you@example.com"
               required
               className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
@@ -102,16 +124,18 @@ const Login = () => {
 
             <input
               type="password"
-              value={password}
-              onChange={(event) =>
-                setPassword(
-                  event.target.value
-                )
-              }
+              name="password"
+              value={form.password}
+              onChange={handleChange}
               placeholder="••••••••"
               required
+              minLength={MIN_PASSWORD_LENGTH}
               className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
             />
+
+            <p className="mt-1 text-xs text-slate-400">
+              At least {MIN_PASSWORD_LENGTH} characters.
+            </p>
           </div>
 
           <button
@@ -120,40 +144,29 @@ const Login = () => {
             className="w-full rounded-lg bg-slate-900 px-4 py-3 font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
-              ? "Signing in..."
-              : "Sign in"}
+              ? "Creating account..."
+              : "Create account"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          New tutor?{" "}
+          Already have an account?{" "}
           <Link
-            to="/signup"
+            to="/login"
             className="font-medium text-slate-900 hover:underline"
           >
-            Create an account
+            Sign in
           </Link>
         </p>
 
         <div className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          <p>
-            <strong>Tutor:</strong>{" "}
-            tutor@test.com
-          </p>
-
-          <p>
-            <strong>Student:</strong>{" "}
-            student@test.com
-          </p>
-
-          <p>
-            <strong>Password:</strong>{" "}
-            password123
-          </p>
+          Sign up creates a <strong>tutor</strong> account.
+          Student accounts are created by their tutor from
+          the dashboard.
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Signup;

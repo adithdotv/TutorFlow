@@ -31,6 +31,23 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  const persistSession = (
+    token,
+    user
+  ) => {
+    localStorage.setItem(
+      "tutorflow_token",
+      token
+    );
+
+    localStorage.setItem(
+      "tutorflow_user",
+      JSON.stringify(user)
+    );
+
+    setUser(user);
+  };
+
   const login = async (
     email,
     password
@@ -48,17 +65,31 @@ export const AuthProvider = ({ children }) => {
       user,
     } = response.data;
 
-    localStorage.setItem(
-      "tutorflow_token",
-      token
+    persistSession(token, user);
+
+    return user;
+  };
+
+  const signup = async (
+    name,
+    email,
+    password
+  ) => {
+    const response = await api.post(
+      "/auth/register",
+      {
+        name,
+        email,
+        password,
+      }
     );
 
-    localStorage.setItem(
-      "tutorflow_user",
-      JSON.stringify(user)
-    );
+    const {
+      token,
+      user,
+    } = response.data;
 
-    setUser(user);
+    persistSession(token, user);
 
     return user;
   };
@@ -81,6 +112,7 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
+        signup,
         logout,
       }}
     >

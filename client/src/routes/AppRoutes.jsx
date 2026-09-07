@@ -7,6 +7,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 import Login from "../pages/Login";
+import Signup from "../pages/Signup";
 import TutorDashboard from "../pages/tutor/TutorDashboard";
 import AddStudent from "../pages/tutor/AddStudent";
 import ScheduleSession from "../pages/tutor/ScheduleSession";
@@ -76,6 +77,24 @@ const AppRoutes = () => {
             />
           ) : (
             <Login />
+          )
+        }
+      />
+
+      <Route
+        path="/signup"
+        element={
+          user ? (
+            <Navigate
+              to={
+                user.role === "tutor"
+                  ? "/tutor"
+                  : "/student"
+              }
+              replace
+            />
+          ) : (
+            <Signup />
           )
         }
       />
