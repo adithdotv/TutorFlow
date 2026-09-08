@@ -134,23 +134,6 @@ const Login = () => {
             Create an account
           </Link>
         </p>
-
-        <div className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          <p>
-            <strong>Tutor:</strong>{" "}
-            tutor@test.com
-          </p>
-
-          <p>
-            <strong>Student:</strong>{" "}
-            student@test.com
-          </p>
-
-          <p>
-            <strong>Password:</strong>{" "}
-            password123
-          </p>
-        </div>
       </div>
     </div>
   );
